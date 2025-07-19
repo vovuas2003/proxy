@@ -3,6 +3,7 @@
 This is proxy server with TLS handshake fragmentation. Inspired by https://github.com/GVCoder09/NoDPI (fork of https://github.com/theo0x0/nodpi).
 
 python_asyncio.py - almost https://github.com/GVCoder09/NoDPI/blob/main/src/sample_version.py
+
 c_linux_pthread.c, c_windows_pthread.c and c_linux_fork.c - results of porting the python program to c using LLM and some brains
 
 ## How to run (check releases for binaries)
@@ -15,7 +16,9 @@ python python_asyncio.py ip port
 Examples (local, "server", universal variants):
 
 python python_asyncio.py 127.0.0.1 8080
+
 python python_asyncio.py 192.168.0.1 55555
+
 python python_asyncio.py 0.0.0.0 55555
 
 ### Python Windows (find exe from pyinstaller in releases):
@@ -34,16 +37,19 @@ Linux (as well as routers):
 
 ## How to use running proxy (examples)
 
-path_to_google_chrome_startup --proxy-server="http://127.0.0.1:8080"
+1. path_to_google_chrome_startup --proxy-server="http://127.0.0.1:8080"
+
 Where path_to_google_chrome_startup:
+
 "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" - example for Windows
+
 google-chrome-stable - for Linux
 
-specify proxy in Firefox settings (just search proxy in settings)
+2. specify proxy in Firefox settings (just search proxy in settings)
 
-specify proxy in your OS on PC
+3. specify proxy in your OS on PC
 
-specify proxy in WiFi Android settings
+4. specify proxy in WiFi Android settings
 
 ## How to use on router (even default vendor firmware)
 
