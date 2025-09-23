@@ -6,6 +6,8 @@ python_asyncio.py - almost https://github.com/GVCoder09/NoDPI/blob/main/src/samp
 
 c_linux_pthread.c, c_windows_pthread.c and c_linux_fork.c - results of porting the python program to c using LLM and some brains
 
+go_proxy.go - same, python to go using LLM and no brains at all :)
+
 ## How to run (check releases for binaries)
 
 Note: python version supports selective fragmentation only for urls line-by-line in blacklist.txt (txt file must be in the same directory as the program).
