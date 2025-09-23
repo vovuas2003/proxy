@@ -1,4 +1,4 @@
-# DISCLAMER: USE FOR EDUCATIONAL PURPOSES ONLY!!!
+# DISCLAIMER: USE FOR EDUCATIONAL PURPOSES ONLY!!!
 
 This is proxy server with TLS handshake fragmentation. Inspired by https://github.com/GVCoder09/NoDPI (fork of https://github.com/theo0x0/nodpi).
 
@@ -35,6 +35,14 @@ compiled_binary.exe ip port
 Linux (as well as routers):
 ./compiled_binary ip port
 
+### Go version
+
+Windows:
+compiled_binary.exe ip port
+
+Linux (not enough RAM on my router, so there are no mips binary in releases):
+./compiled_binary ip port
+
 ## How to use running proxy (examples)
 
 1. path_to_google_chrome_startup --proxy-server="http://127.0.0.1:8080"
@@ -44,6 +52,8 @@ Where path_to_google_chrome_startup:
 "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" - example for Windows
 
 google-chrome-stable - for Linux
+
+Optional: add --incognito option and/or https://www.example.com after --proxy-server="..." option.
 
 2. specify proxy in Firefox settings (just search proxy in settings)
 
