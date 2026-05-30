@@ -93,26 +93,45 @@ async def new_conn(local_reader, local_writer):
     #print("New conn, tasks len = ", len(TASKS), " sizeof (bytes) = ", sys.getsizeof(TASKS)) # cleanup debug
 
 async def fragment_data(local_reader, remote_writer):
+    def _extract_sni_position(data):
+        i = 0
+        while i < len(data) - 8:
+            if all(data[i + j] == 0x00 for j in [0, 1, 2, 4, 6, 7]):
+                ext_len = data[i + 3]
+                server_name_list_len = data[i + 5]
+                server_name_len = data[i + 8]
+                if (
+                    ext_len - server_name_list_len == 2
+                    and server_name_list_len - server_name_len == 3
+                ):
+                    sni_start = i + 9
+                    sni_end = sni_start + server_name_len
+                    return sni_start, sni_end
+            i += 1
+        return None
+
     try:
         head = await local_reader.read(5)
         data = await local_reader.read(2048)
     except:
         local_reader.close()
         return
-    parts = []
     if BLOCKED != None:
         if all(data.find(site) == -1 for site in BLOCKED):
             remote_writer.write(head + data)
             await remote_writer.drain()
             return
-    host_end_index = data.find(b"\x00")
-    if host_end_index != -1:
-        parts.append(bytes.fromhex("160304") + int(host_end_index + 1).to_bytes(2, byteorder="big") + data[: host_end_index + 1])
-        data = data[host_end_index + 1:]
-    while data:
-        part_len = random.randint(1, len(data))
-        parts.append(bytes.fromhex("160304") + int(part_len).to_bytes(2, byteorder="big") + data[0:part_len])
-        data = data[part_len:]
+    parts = []
+    sni_pos = _extract_sni_position(data)
+    if sni_pos:
+        part_start = data[: sni_pos[0]]
+        sni_data = data[sni_pos[0] : sni_pos[1]]
+        part_end = data[sni_pos[1] :]
+        parts.append(bytes.fromhex("160304") + len(part_start).to_bytes(2, byteorder = "big") + part_start)
+        for i in range(0, len(sni_data), 2):
+            chunk = sni_data[i : i + 2]
+            parts.append(bytes.fromhex("160304") + len(chunk).to_bytes(2, "big") + chunk)
+        parts.append(bytes.fromhex("160304") + len(part_end).to_bytes(2, "big") + part_end)
     remote_writer.write(b"".join(parts))
     await remote_writer.drain()
 
