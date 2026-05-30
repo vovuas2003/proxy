@@ -2,7 +2,9 @@
 
 This is proxy server with TLS handshake fragmentation. Inspired by https://github.com/GVCoder09/NoDPI (fork of https://github.com/theo0x0/nodpi).
 
-python_asyncio.py - almost https://github.com/GVCoder09/NoDPI/blob/33bdcab036f3cfdb5f84b01a46237ae6ace512bb/src/sample_version.py (with https://github.com/GVCoder09/NoDPI/commit/55f10df72acba898db6879768689315dfb71669a memory leak fix and fragmentation of all domains by default)
+python_asyncio.py - almost https://github.com/GVCoder09/NoDPI/blob/33bdcab036f3cfdb5f84b01a46237ae6ace512bb/src/sample_version.py (with https://github.com/GVCoder09/NoDPI/commit/55f10df72acba898db6879768689315dfb71669a memory leak fix, https://github.com/GVCoder09/NoDPI/commit/b7c24e1e1c51fa8250e10340726e7710d3fc8209 improved sni fragmentation method; and fragmentation for all domains by default)
+
+**Now only python source code is improved, other versions may not work!**
 
 c_linux_pthread.c, c_windows_pthread.c and c_linux_fork.c - results of porting the python program to c using LLM and some brains
 
