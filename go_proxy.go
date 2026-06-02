@@ -101,6 +101,22 @@ func pipe(src net.Conn, dst net.Conn, done chan<- struct{}) {
 	io.Copy(dst, src)
 }
 
+func extractSNIPosition(data []byte) (start, end int, found bool) {
+	for i := 0; i < len(data)-8; i++ {
+		if data[i] == 0x00 && data[i + 1] == 0x00 && data[i + 2] == 0x00 && data[i + 4] == 0x00 && data[i + 6] == 0x00 && data[i + 7] == 0x00 {
+			extLen := data[i + 3]
+			listLen := data[i + 5]
+			nameLen := data[i + 8]
+			if int(extLen) - int(listLen) == 2 && int(listLen) - int(nameLen) == 3 {
+				sniStart := i + 9
+				sniEnd := sniStart + int(nameLen)
+				return sniStart, sniEnd, true
+			}
+		}
+	}
+	return 0, 0, false
+}
+
 func fragmentData(localConn net.Conn, remoteConn net.Conn) error {
 	head := make([]byte, 5)
 	_, err := io.ReadFull(localConn, head)
@@ -113,31 +129,32 @@ func fragmentData(localConn net.Conn, remoteConn net.Conn) error {
 		return err
 	}
 	data = data[:n]
-	hostEndIndex := -1
-	for i, b := range data {
-		if b == 0x00 {
-			hostEndIndex = i
-			break
-		}
-	}
+	tlsHeaderPrefix := []byte{0x16, 0x03, 0x04}
 	var parts [][]byte
-	if hostEndIndex != -1 {
-		prefix, _ := hex.DecodeString("160304")
-		partLen := hostEndIndex + 1
-		lenBytes := []byte{byte(partLen >> 8), byte(partLen & 0xff)}
-		part := append(prefix, lenBytes...)
-		part = append(part, data[:partLen]...)
-		parts = append(parts, part)
-		data = data[partLen:]
-	}
-	for len(data) > 0 {
-		partLen := rand.Intn(len(data)) + 1
-		prefix, _ := hex.DecodeString("160304")
-		lenBytes := []byte{byte(partLen >> 8), byte(partLen & 0xff)}
-		part := append(prefix, lenBytes...)
-		part = append(part, data[:partLen]...)
-		parts = append(parts, part)
-		data = data[partLen:]
+	start, end, found := extractSNIPosition(data)
+	if found {
+		partStart := data[: start]
+		sniData := data[start : end]
+		partEnd := data[end :]
+		makePart := func(payload []byte) []byte {
+			lenBytes := []byte{byte(len(payload) >> 8), byte(len(payload) & 0xff)}
+			part := append(tlsHeaderPrefix, lenBytes...)
+			return append(part, payload...)
+		}
+		if len(partStart) > 0 {
+			parts = append(parts, makePart(partStart))
+		}
+		for i := 0; i < len(sniData); i += 2 {
+			chunkEnd := i + 2
+			if chunkEnd > len(sniData) {
+				chunkEnd = len(sniData)
+			}
+			chunk := sniData[i:chunkEnd]
+			parts = append(parts, makePart(chunk))
+		}
+		if len(partEnd) > 0 {
+			parts = append(parts, makePart(partEnd))
+		}
 	}
 	for _, p := range parts {
 		_, err := remoteConn.Write(p)
@@ -147,3 +164,4 @@ func fragmentData(localConn net.Conn, remoteConn net.Conn) error {
 	}
 	return nil
 }
+

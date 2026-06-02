@@ -2,8 +2,6 @@
 
 This is proxy server with TLS handshake fragmentation. Inspired by https://github.com/GVCoder09/NoDPI (fork of https://github.com/theo0x0/nodpi).
 
-**Now only python and c source codes are improved, go version and binaries may not work!**
-
 python_asyncio.py - almost https://github.com/GVCoder09/NoDPI/blob/33bdcab036f3cfdb5f84b01a46237ae6ace512bb/src/sample_version.py (with https://github.com/GVCoder09/NoDPI/commit/55f10df72acba898db6879768689315dfb71669a memory leak fix, https://github.com/GVCoder09/NoDPI/commit/b7c24e1e1c51fa8250e10340726e7710d3fc8209 improved sni fragmentation method; and fragmentation for all domains by default)
 
 c_linux_pthread.c, c_windows_pthread.c and c_linux_fork.c - results of porting the python program to c using LLM and some brains
@@ -11,6 +9,8 @@ c_linux_pthread.c, c_windows_pthread.c and c_linux_fork.c - results of porting t
 go_proxy.go - same, python to go using LLM and no brains at all :)
 
 ## How to run (check releases for binaries)
+
+**Now only source codes are improved and partially tested, old binaries may not work!**
 
 Note: **only python version** supports selective fragmentation for urls line-by-line in blacklist.txt (txt file must be in the same directory as the program). Check the format in the example file blacklist.txt.
 
