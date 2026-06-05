@@ -11,8 +11,6 @@ gcc -Wall -Wextra c_windows_pthread.c -o my_proxy.exe -lws2_32 -lpthread
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "ws2_32.lib")
-
 #define BUFFER_SIZE 4096
 
 typedef struct {
@@ -78,7 +76,7 @@ int fragment_data(SOCKET local_fd, SOCKET remote_fd) {
     ssize_t n = read_n(local_fd, head, 5);
     if (n != 5) return -1;
     uint8_t data[2048];
-    n = recv(local_fd, data, sizeof(data), 0);
+    n = recv(local_fd, (char *)data, sizeof(data), 0);
     if (n <= 0) return -1;
     size_t data_len = (size_t)n;
     size_t sni_start = 0;
