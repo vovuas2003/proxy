@@ -161,33 +161,50 @@ int fragment_data(int local_fd, int remote_fd) {
     n = read(local_fd, data, sizeof(data));
     if (n <= 0) return -1;
     size_t data_len = (size_t)n;
-    size_t offset = 0;
-    uint8_t part_buf[3 + 2 + 2048];
-    uint8_t *zero_ptr = memchr(data, 0x00, data_len);
-    if (zero_ptr) {
-        size_t host_end_index = zero_ptr - data;
-        part_buf[0] = 0x16;
-        part_buf[1] = 0x03;
-        part_buf[2] = 0x04;
-        uint16_t len_be = htons((uint16_t)(host_end_index + 1));
-        memcpy(part_buf + 3, &len_be, 2);
-        memcpy(part_buf + 5, data, host_end_index + 1);
-        if (write_n(remote_fd, part_buf, 5 + host_end_index + 1) < 0) return -1;
-        offset = host_end_index + 1;
-        data_len -= offset;
+    size_t sni_start = 0;
+    size_t sni_end = 0;
+    int found_sni = 0;
+    for (size_t i = 0; i < data_len - 8; i++) {
+        if (data[i + 0] == 0x00 && data[i + 1] == 0x00 && data[i + 2] == 0x00 && data[i + 4] == 0x00 && data[i + 6] == 0x00 && data[i + 7] == 0x00) {
+            uint8_t ext_len = data[i + 3];
+            uint8_t server_name_list_len = data[i + 5];
+            uint8_t server_name_len = data[i + 8];
+            if ((int)ext_len - (int)server_name_list_len == 2 && 
+                (int)server_name_list_len - (int)server_name_len == 3) {
+                found_sni = 1;
+                sni_start = i + 9;
+                sni_end = sni_start + server_name_len;
+                break;
+            }
+        }
     }
-    while (data_len > 0) {
-        size_t max_len = data_len;
-        size_t part_len = (rand() % max_len) + 1;
-        part_buf[0] = 0x16;
-        part_buf[1] = 0x03;
-        part_buf[2] = 0x04;
-        uint16_t len_be = htons((uint16_t)part_len);
+    if (!found_sni) {
+        return -1;
+    }
+    uint8_t part_buf[3 + 2 + 2048];
+    part_buf[0] = 0x16;
+    part_buf[1] = 0x03;
+    part_buf[2] = 0x04;
+    size_t part_start_len = sni_start;
+    if (part_start_len > 0) {
+        uint16_t len_be = htons((uint16_t)part_start_len);
         memcpy(part_buf + 3, &len_be, 2);
-        memcpy(part_buf + 5, data + offset, part_len);
-        if (write_n(remote_fd, part_buf, 5 + part_len) < 0) return -1;
-        offset += part_len;
-        data_len -= part_len;
+        memcpy(part_buf + 5, data, part_start_len);
+        if (write_n(remote_fd, part_buf, 5 + part_start_len) < 0) return -1;
+    }
+    for (size_t i = sni_start; i < sni_end; i += 2) {
+        size_t chunk_len = (sni_end - i >= 2) ? 2 : (sni_end - i);
+        uint16_t len_be = htons((uint16_t)chunk_len);
+        memcpy(part_buf + 3, &len_be, 2);
+        memcpy(part_buf + 5, data + i, chunk_len);
+        if (write_n(remote_fd, part_buf, 5 + chunk_len) < 0) return -1;
+    }
+    size_t part_end_len = data_len - sni_end;
+    if (part_end_len > 0) {
+        uint16_t len_be = htons((uint16_t)part_end_len);
+        memcpy(part_buf + 3, &len_be, 2);
+        memcpy(part_buf + 5, data + sni_end, part_end_len);
+        if (write_n(remote_fd, part_buf, 5 + part_end_len) < 0) return -1;
     }
     return 0;
 }
