@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io"
 	"math/rand"
@@ -103,11 +102,11 @@ func pipe(src net.Conn, dst net.Conn, done chan<- struct{}) {
 
 func extractSNIPosition(data []byte) (start, end int, found bool) {
 	for i := 0; i < len(data)-8; i++ {
-		if data[i] == 0x00 && data[i + 1] == 0x00 && data[i + 2] == 0x00 && data[i + 4] == 0x00 && data[i + 6] == 0x00 && data[i + 7] == 0x00 {
-			extLen := data[i + 3]
-			listLen := data[i + 5]
-			nameLen := data[i + 8]
-			if int(extLen) - int(listLen) == 2 && int(listLen) - int(nameLen) == 3 {
+		if data[i] == 0x00 && data[i+1] == 0x00 && data[i+2] == 0x00 && data[i+4] == 0x00 && data[i+6] == 0x00 && data[i+7] == 0x00 {
+			extLen := data[i+3]
+			listLen := data[i+5]
+			nameLen := data[i+8]
+			if int(extLen)-int(listLen) == 2 && int(listLen)-int(nameLen) == 3 {
 				sniStart := i + 9
 				sniEnd := sniStart + int(nameLen)
 				return sniStart, sniEnd, true
@@ -133,9 +132,9 @@ func fragmentData(localConn net.Conn, remoteConn net.Conn) error {
 	var parts [][]byte
 	start, end, found := extractSNIPosition(data)
 	if found {
-		partStart := data[: start]
-		sniData := data[start : end]
-		partEnd := data[end :]
+		partStart := data[:start]
+		sniData := data[start:end]
+		partEnd := data[end:]
 		makePart := func(payload []byte) []byte {
 			lenBytes := []byte{byte(len(payload) >> 8), byte(len(payload) & 0xff)}
 			part := append(tlsHeaderPrefix, lenBytes...)
@@ -164,4 +163,3 @@ func fragmentData(localConn net.Conn, remoteConn net.Conn) error {
 	}
 	return nil
 }
-
